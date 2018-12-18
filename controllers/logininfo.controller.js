@@ -4,9 +4,7 @@ const PatientRegister = require('../models/patientregister.model');
 const PatientDoctor = require('../models/patientdoctor.model');
 const DoctorPatient = require('../models/doctorpatient.model');
 const uuid = require('uuid4');
-const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
-const SALT_WORK_FACTOR = 10;
 
 exports.testuser = (req, res) => {
     res.send('this is user data');
@@ -38,10 +36,6 @@ exports.registeruser = (req, res, next) => {
             );
 
 
-            bcrypt.hash(doctor.password, SALT_WORK_FACTOR).then((hash) => {
-                // Store hash in your password DB.
-                if (hash) {
-                    doctor.password = hash;
                     doctor.save((err, doctordata) => {
                         if (!err) {
                             // res.send(doctordata);
@@ -55,10 +49,7 @@ exports.registeruser = (req, res, next) => {
                         }
 
                     });
-                } else {
-                    return next(err);
-                }
-            });
+             
 
         } catch (e) {
             log.error('Route /users/ failed with error', e);
@@ -87,10 +78,7 @@ exports.registeruser = (req, res, next) => {
             }
         );
 
-        bcrypt.hash(patient.password, SALT_WORK_FACTOR).then((hash) => {
-            // Store hash in your password DB.
-            if (hash) {
-                patient.password = hash;
+  
                 patient.save((err, patientdata) => {
                     if (!err) {
                         // res.send(patientdata);
@@ -103,10 +91,6 @@ exports.registeruser = (req, res, next) => {
                     }
 
                 });
-            } else {
-                return next(err);
-            }
-        });
 
     } else {
         res.send({message:"Usertype not valid or present"});
@@ -129,10 +113,6 @@ exports.registeruser = (req, res, next) => {
             }
         );
 
-        bcrypt.hash(logininfo.password, SALT_WORK_FACTOR).then((hash) => {
-            // Store hash in your password DB.
-            if (hash) {
-                logininfo.password = hash;
                 logininfo.save((err, logindata) => {
                     if (!err)
                         res.send({ message: "user resgistered succesfully", user_data: userdata, login_data: logindata });
@@ -144,12 +124,6 @@ exports.registeruser = (req, res, next) => {
                     }
 
                 });
-            } else {
-                return next(err);
-            }
-        });
-
-
     }
 };
 
@@ -157,15 +131,14 @@ exports.registeruser = (req, res, next) => {
 
 exports.authenticate_user = (req, res, next) => {
     LogininfoModel.findOne({
-        emailid: req.body.emailid
+        emailid: req.body.emailid,
+        password: req.body.password
     }, (err, user) => {
         if (err) throw err;
 
         if (!user) {
-            res.send({ success: false, msg: 'Authentication failed. User not found' });
+            res.send({ success: false, msg: 'Authentication failed. Wrong credentials' });
         } else {
-            bcrypt.compare(req.body.password, user.password, (error, match) => {
-                if (match == true) {
                     var token = jwt.sign({ emailid: user.emailid }, 'trianabot');
                     var data = {
                         success: true,
@@ -176,12 +149,6 @@ exports.authenticate_user = (req, res, next) => {
                         token: token
                     };
                     res.send(data);
-                } else {
-                    res.send({ success: false, msg: "Wrong Password" });
-                    return next(error);
-                }
-
-            });
         }
         
     });
