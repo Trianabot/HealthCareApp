@@ -50,7 +50,8 @@ app.use(bodyParser.urlencoded({extended: false}));
 
 
 app.use('/user',userinfo);
-// app.use('/doctor',doctor);
+app.use('/patient',patient);
+app.use('/doctor', doctor);
 
 
 app.use('/', (req, res) => {
